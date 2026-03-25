@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JolSapari — Алматы · Жетісай билет жүйесі</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo" onclick="adminSecretClick()" style="cursor:pointer" title="">
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24"><path d="M17 7H7C4.8 7 3 8.8 3 11v4h1v1a1 1 0 002 0v-1h12v1a1 1 0 002 0v-1h1v-4c0-2.2-1.8-4-4-4zm-10 6H5v-2c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v2H7zm-1 0a1 1 0 110-2 1 1 0 010 2zm10 0a1 1 0 110-2 1 1 0 010 2z"/></svg>
+    </div>
+    JolSapari
+  </div>
+  <div class="nav-right">
+    <button class="btn active" id="nav-client" onclick="switchView('client')">Билет алу</button>
+  </div>
+  <!-- Жасырын админ кіру: логотипке 5 рет басу -->
+</nav>
+
+<!-- ===== CLIENT VIEW ===== -->
+<div id="view-client" class="view">
+  <div class="hero">
+    <h1>Жетісай — Алматы</h1>
+    <p>Онлайн брондау · Kaspi арқылы төлем</p>
+    <div class="route-vis">
+      <div class="cpill">Жетісай</div>
+      <div class="rline"><span class="rdot"></span><span class="rbar"></span><span class="rdot"></span><span class="rbar"></span><span class="rdot"></span></div>
+      <div class="cpill">Алматы</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="search-card">
+      <div class="sc-row">
+        <div class="fld">
+          <label>Бағыт</label>
+          <select id="c-dir">
+            <option value="JA">Жетісай → Алматы</option>
+            <option value="AJ">Алматы → Жетісай</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Күні</label>
+          <input type="date" id="c-date">
+        </div>
+        <div class="fld">
+          <label>Жолаушы саны</label>
+          <select id="c-pax">
+            <option value="1">1 жолаушы</option>
+            <option value="2">2 жолаушы</option>
+            <option value="3">3 жолаушы</option>
+            <option value="4">4 жолаушы</option>
+          </select>
+        </div>
+        <div class="fld">
+          <button class="btn primary full" onclick="searchTrips()">Іздеу</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="trip-results" style="display:none">
+      <div class="section-label" id="results-label">Қол жетімді рейстер</div>
+      <div id="trips-list"></div>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">🚌</div>
+      <div class="empty-title">Рейс іздеу</div>
+      <div class="empty-sub">Күнін таңдап, іздеу батырмасын басыңыз</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN VIEW ===== -->
+<div id="view-admin" class="view" style="display:none">
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">Админ панелі</div>
+      <nav class="sidebar-nav">
+        <a class="snav active" onclick="adminTab('dashboard')">📊 Жалпы шолу</a>
+        <a class="snav" onclick="adminTab('buses')">🚌 Автобустар</a>
+        <a class="snav" onclick="adminTab('trips')">🗓️ Рейстер</a>
+        <a class="snav" onclick="adminTab('passengers')">👥 Жолаушылар</a>
+        <a class="snav" onclick="adminTab('revenue')">💰 Кіріс</a>
+        <a class="snav" onclick="adminTab('settings')">⚙️ Баптаулар</a>
+      </nav>
+      <button class="btn logout-btn" onclick="logout()">Шығу</button>
+    </aside>
+
+    <main class="admin-main">
+
+      <!-- DASHBOARD -->
+      <section id="tab-dashboard" class="atab active">
+        <h2 class="page-title">Жалпы шолу</h2>
+        <p class="page-sub" id="dash-date">Бүгін жүктелуде...</p>
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <h3 class="sub-title" style="margin:0">Рейстер</h3>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="font-size:12px;color:var(--muted)">Күні:</label>
+            <input type="date" id="dash-filter-date" onchange="renderDashboard()" style="border:1px solid var(--bdr);border-radius:var(--rad);padding:6px 10px;font-size:12px;background:var(--bg2);color:var(--text)">
+            <button class="btn" style="font-size:12px;padding:5px 10px" onclick="document.getElementById('dash-filter-date').value='';renderDashboard()">Бүгін</button>
+            <button class="btn" style="font-size:12px;padding:5px 10px" onclick="document.getElementById('dash-filter-date').value='all';renderDashboard()">Барлығы</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl" id="dash-trips-table">
+            <thead><tr><th>Күні</th><th>Автобус</th><th>Бағыт</th><th>Шығу</th><th>Жету</th><th>Орын картасы</th><th>Кіріс</th><th>Күй</th></tr></thead>
+            <tbody id="dash-trips-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- BUSES -->
+      <section id="tab-buses" class="atab">
+        <h2 class="page-title">Автобустар</h2>
+        <p class="page-sub">Автобустарды қосу және өңдеу</p>
+        <div class="form-card">
+          <h3>Жаңа автобус қосу</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Мемлекеттік нөмір</label><input type="text" id="b-plate" placeholder="777 KZT 02"></div>
+            <div class="fg"><label>Маркасы / Моделі</label><input type="text" id="b-model" placeholder="Yutong ZK6127"></div>
+          </div>
+          <div style="margin:10px 0 4px;font-size:12px;font-weight:500;color:var(--muted);">Жоғарғы деңгей орындары (18 орын)</div>
+          <div class="form-grid-3">
+            <div class="fg"><label>Жеке орын саны</label><input type="number" id="b-solo" value="12" min="0"></div>
+            <div class="fg"><label>Жұптық орын (2=1 блок)</label><input type="number" id="b-couple" value="2" min="0" step="2"></div>
+            <div class="fg"><label>4-лік орын (4=1 блок)</label><input type="number" id="b-quad" value="4" min="0" step="4"></div>
+          </div>
+          <div style="margin:10px 0 4px;font-size:12px;font-weight:500;color:var(--muted);">Төменгі деңгей орындары</div>
+          <div class="form-grid">
+            <div class="fg"><label>Төменгі орын саны</label><input type="number" id="b-bottom" value="18" min="0"></div>
+            <div class="fg" style="display:flex;align-items:flex-end;">
+              <div id="seat-count-preview" style="padding:8px 12px;background:var(--bg2);border-radius:var(--rad);font-size:13px;color:var(--muted);width:100%;">Жалпы: <strong>36 орын</strong></div>
+            </div>
+          </div>
+          <button class="btn primary" onclick="addBus()">Автобус қосу</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Нөмір</th><th>Модель</th><th>Орын схемасы</th><th>Күй</th><th>Әрекет</th></tr></thead>
+            <tbody id="buses-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TRIPS -->
+      <section id="tab-trips" class="atab">
+        <h2 class="page-title">Рейстерді басқару</h2>
+        <p class="page-sub">Қай күні қай автобус жолға шығатынын реттеңіз</p>
+        <div class="form-card">
+          <h3>Жаңа рейс қосу</h3>
+          <div class="form-grid-3">
+            <div class="fg"><label>Автобус</label><select id="t-bus" class="full"></select></div>
+            <div class="fg"><label>Бағыт</label>
+              <select id="t-dir">
+                <option value="AJ">Алматы → Жетісай</option>
+                <option value="JA">Жетісай → Алматы</option>
+              </select>
+            </div>
+            <div class="fg"><label>Күні</label><input type="date" id="t-date"></div>
+            <div class="fg"><label>Шығу уақыты</label><input type="time" id="t-dep" value="06:00"></div>
+            <div class="fg"><label>Жету уақыты</label><input type="time" id="t-arr" value="17:30"></div>
+            <div class="fg"></div>
+          </div>
+          <div style="margin:10px 0 4px;font-size:12px;font-weight:500;color:var(--muted);">Орын бағалары (₸)</div>
+          <div class="form-grid" style="grid-template-columns:repeat(4,1fr)">
+            <div class="fg"><label>Жеке орын</label><input type="number" id="t-p-solo" value="3500"></div>
+            <div class="fg"><label>Жұптық орын</label><input type="number" id="t-p-couple" value="3000"></div>
+            <div class="fg"><label>4-лік орын</label><input type="number" id="t-p-quad" value="2800"></div>
+            <div class="fg"><label>Төменгі орын</label><input type="number" id="t-p-bottom" value="3500"></div>
+          </div>
+          <button class="btn primary" onclick="addTrip()">Рейс қосу</button>
+        </div>
+        <div class="toolbar">
+          <span class="sub-title" style="margin:0">Рейстер тізімі</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:12px;color:var(--muted)">Күні бойынша:</label>
+            <input type="date" id="filter-trip-date" onchange="renderTripsAdmin()" style="border:0.5px solid var(--bdr);border-radius:var(--rad);padding:6px 10px;font-size:12px;background:var(--bg2);color:var(--text)">
+            <button class="btn" style="font-size:12px;padding:5px 10px" onclick="document.getElementById('filter-trip-date').value='';renderTripsAdmin()">Барлығы</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>Күні</th><th>Автобус</th><th>Бағыт</th><th>Шығу</th><th>Жету</th><th>Бағалар</th><th>Сатылды</th><th>Күй</th><th></th></tr></thead>
+            <tbody id="trips-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PASSENGERS -->
+      <section id="tab-passengers" class="atab">
+        <h2 class="page-title">Жолаушылар тізімі</h2>
+        <p class="page-sub">Рейс бойынша жолаушыларды қараңыз</p>
+        <div class="toolbar">
+          <select id="pax-trip-filter" onchange="renderPassengers()" style="border:0.5px solid var(--bdr);border-radius:var(--rad);padding:7px 12px;font-size:13px;background:var(--bg2);color:var(--text);min-width:280px"></select>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary" onclick="openAdminBooking()">+ Орын брондау</button>
+            <button class="btn" onclick="printPassengers()">Баспаға шығару</button>
+          </div>
+        </div>
+        <div class="stats-grid" id="pax-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"></div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Аты-жөні</th><th>Телефон</th><th>Орын</th><th>Орын түрі</th><th>Баға</th><th>Төлем</th><th>Күй</th><th></th></tr></thead>
+            <tbody id="pax-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REVENUE -->
+      <section id="tab-revenue" class="atab">
+        <h2 class="page-title">Кіріс есебі</h2>
+        <p class="page-sub">Kaspi арқылы ИП-ға түскен төлемдер</p>
+        <div class="stats-grid" id="rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <h3 class="sub-title">Соңғы төлемдер</h3>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead><tr><th>Күні/Уақыты</th><th>Билет нөмірі</th><th>Жолаушы</th><th>Рейс</th><th>Орын</th><th>Сомасы</th><th>Тәсіл</th><th>Күй</th></tr></thead>
+            <tbody id="rev-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="tab-settings" class="atab">
+        <h2 class="page-title">Баптаулар</h2>
+        <p class="page-sub">Компания және Kaspi деректері</p>
+        <div class="form-card">
+          <h3>Компания деректері</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Компания атауы</label><input type="text" id="s-company" placeholder="ИП Сұлтанов Б.А."></div>
+            <div class="fg"><label>БСН / ЖСН</label><input type="text" id="s-bin" placeholder="123456789012"></div>
+            <div class="fg"><label>Байланыс телефон</label><input type="tel" id="s-phone" placeholder="+7 700 000 0000"></div>
+            <div class="fg"><label>Email</label><input type="email" id="s-email" placeholder="info@jolsapari.kz"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <h3>Kaspi Business деректері</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Kaspi телефоны (ИП)</label><input type="tel" id="s-kaspi-phone" placeholder="+7 701 555 0000"></div>
+            <div class="fg"><label>Kaspi QR сілтемесі</label><input type="text" id="s-kaspi-qr" placeholder="https://kaspi.kz/pay/..."></div>
+          </div>
+          <div class="fg"><label>Төлем нұсқауы (клиентке көрсетіледі)</label><textarea id="s-kaspi-note" rows="2" style="width:100%;border:0.5px solid var(--bdr);border-radius:var(--rad);padding:8px 11px;font-size:13px;background:var(--bg2);color:var(--text);resize:vertical">Kaspi Gold картасынан немесе Kaspi Pay арқылы осы нөмірге аударыңыз. Аударым хабарламасында билет нөмірін жазыңыз.</textarea></div>
+        </div>
+        <div class="form-card">
+          <h3>Админ құпия сөзін өзгерту</h3>
+          <div class="form-grid">
+            <div class="fg"><label>Жаңа құпия сөз</label><input type="password" id="s-pass" placeholder="••••••••"></div>
+            <div class="fg"><label>Растау</label><input type="password" id="s-pass2" placeholder="••••••••"></div>
+          </div>
+        </div>
+        <button class="btn primary" onclick="saveSettings()">Сақтау</button>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ===== ADMIN LOGIN MODAL ===== -->
+<div class="overlay" id="login-modal">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <h2>Кіру</h2>
+      <button class="mclose" onclick="closeModal('login-modal')">×</button>
+    </div>
+    <div class="fg"><label>Логин</label><input type="text" id="login-user" value="admin"></div>
+    <div class="fg"><label>Құпия сөз</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="login-err" style="display:none;color:#DC2626;font-size:12px;margin-bottom:8px;"></div>
+    <button class="btn primary full" onclick="doLogin()">Кіру</button>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Демо: admin / admin123</p>
+  </div>
+</div>
+
+<!-- ===== BOOKING MODAL ===== -->
+<div class="overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2 id="modal-title">Орын таңдау</h2>
+      <button class="mclose" onclick="closeModal('booking-modal')">×</button>
+    </div>
+    <div class="steps">
+      <div class="step on" id="st1"></div>
+      <div class="step" id="st2"></div>
+      <div class="step" id="st3"></div>
+    </div>
+    <div class="trip-summary">
+      <div><div class="ts-city" id="ts-from">Алматы</div><div class="ts-time" id="ts-dep">06:00</div></div>
+      <div class="ts-arrow">→</div>
+      <div style="text-align:right"><div class="ts-city" id="ts-to">Жетісай</div><div class="ts-time" id="ts-arr">17:30</div></div>
+    </div>
+    <div id="ts-bus-info" style="font-size:12px;color:var(--muted);text-align:center;margin:-8px 0 12px;"></div>
+
+    <!-- STEP 1: SEAT -->
+    <div id="bstep-seat">
+      <div class="seat-map-wrap">
+        <div class="sm-hdr">
+          <span style="font-weight:500">Орын картасы</span>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <span class="leg"><span class="lbox free"></span>Бос</span>
+            <span class="leg"><span class="lbox taken"></span>Алынған</span>
+            <span class="leg"><span class="lbox sel"></span>Таңдалған</span>
+            <span class="leg"><span class="lbox couple"></span>Жұптық</span>
+            <span class="leg"><span class="lbox quad"></span>Тапшап</span>
+          </div>
+        </div>
+        <div class="sm-body" id="seat-map-body"></div>
+      </div>
+      <div id="seat-selected-info" class="sel-info" style="display:none"></div>
+      <button class="btn primary full" onclick="goStep(2)">Жалғастыру →</button>
+    </div>
+
+    <!-- STEP 2: PASSENGER -->
+    <div id="bstep-passenger" style="display:none">
+      <div class="form-grid">
+        <div class="fg"><label>Аты</label><input type="text" id="p-first" placeholder="Болат"></div>
+        <div class="fg"><label>Тегі</label><input type="text" id="p-last" placeholder="Ахметов"></div>
+      </div>
+      <div class="fg">
+        <label>Телефон нөмірі (11 цифр)</label>
+        <input type="tel" id="p-phone" placeholder="87001234567" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
+        <span id="phone-hint" style="font-size:11px;color:var(--muted)">Мысалы: 87001234567</span>
+      </div>
+      <div id="pax-gender-list" style="margin-bottom:12px"></div>
+      <div class="sel-info" id="confirm-seat-info"></div>
+      <button class="btn primary full" onclick="goStep(3)">Төлемге өту →</button>
+    </div>
+
+    <!-- STEP 3: KASPI PAYMENT -->
+    <div id="bstep-payment" style="display:none">
+      <div class="kaspi-box">
+        <div class="kaspi-logo">Kaspi.kz</div>
+        <div class="kaspi-sub" id="kaspi-note-text">ИП-ға Kaspi арқылы төлеңіз</div>
+        <div class="kaspi-qr" id="kaspi-qr-block">
+          <img src="kaspi-qr.png" alt="Kaspi QR" style="width:160px;height:160px;object-fit:contain;border-radius:8px;">
+        </div>
+        <div class="kaspi-amount" id="k-amount">3 500 ₸</div>
+        <div class="kaspi-recipient" id="k-company">ИП Сұлтанов Б.А.</div>
+        <div class="kaspi-phone" id="k-phone">+7 701 555 0000</div>
+        <div class="kaspi-note" id="k-note">Kaspi Gold картасынан немесе Kaspi Pay арқылы аударыңыз</div>
+      </div>
+      <div class="pay-sum-row">
+        <div><div style="font-size:12px;color:var(--muted)">Төлем соңы</div><div style="font-size:13px;font-weight:500" id="k-ticket-num">TKT-XXXX</div></div>
+        <div class="psr-amount" id="k-final">3 500 ₸</div>
+      </div>
+      <a id="kaspi-pay-btn" href="https://pay.kaspi.kz/pay/wscyhhai" target="_blank" style="display:block;width:100%;background:#E83A3A;color:white;border:none;border-radius:var(--rad);padding:14px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;">
+        💳 Kaspi арқылы төлеу
+      </a>
+      <button class="btn primary full" onclick="confirmPayment()">Төлем расталды ✓</button>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="bstep-success" style="display:none">
+      <div class="ticket-wrap">
+        <div class="tick-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path d="M7 16l6 6 12-12" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="tick-title">Билет расталды!</div>
+        <div class="tick-sub">SMS хабарлама жіберілді</div>
+        <div class="ticket-card" id="final-ticket-card">
+          <!-- JS fills this -->
+        </div>
+        <button class="btn primary full" style="margin-top:14px" onclick="closeModal('booking-modal')">Жабу</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== ADMIN BOOKING MODAL ===== -->
+<div class="overlay" id="admin-book-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Орын брондау (Админ)</h2>
+      <button class="mclose" onclick="closeModal('admin-book-modal')">×</button>
+    </div>
+    <div style="background:var(--brand-light);border-radius:var(--rad);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--brand)">
+      Телефонмен сұраған клиент үшін орын брондаңыз. Төлем офлайн алынды деп белгіленеді.
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Рейс таңдаңыз</label>
+      <select id="ab-trip" onchange="buildAdminSeatMap()"></select>
+    </div>
+    <div id="ab-seat-map" style="margin-bottom:12px"></div>
+    <div id="ab-seat-info" style="display:none" class="sel-info" style="margin-bottom:12px"></div>
+    <div class="form-grid" style="margin-bottom:10px">
+      <div class="fg"><label>Аты</label><input type="text" id="ab-first" placeholder="Болат"></div>
+      <div class="fg"><label>Тегі</label><input type="text" id="ab-last" placeholder="Ахметов"></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Телефон (11 цифр)</label>
+      <input type="tel" id="ab-phone" placeholder="87001234567" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="fg"><label>Жынысы</label>
+        <select id="ab-gender"><option value="M">Ер адам</option><option value="F">Әйел адам</option><option value="C">Бала</option></select>
+      </div>
+      <div class="fg"><label>Төлем тәсілі</label>
+        <select id="ab-method"><option value="Офлайн">Офлайн (қолма-қол)</option><option value="Kaspi Pay">Kaspi Pay</option><option value="Kaspi QR">Kaspi QR</option></select>
+      </div>
+    </div>
+    <button class="btn primary full" onclick="adminBookSeat()">Брондауды растау ✓</button>
+  </div>
+</div>
+<!-- ===== TOAST ===== -->
+<div id="toast" class="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
